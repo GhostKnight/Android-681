@@ -41,11 +41,11 @@
             android:orientation="vertical" >
 
             <EditText
-                android:id="@+id/email"
+                android:id="@+id/username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/prompt_email"
-                android:inputType="textEmailAddress"
+                android:hint="@string/prompt_username"
+                android:inputType="textNoSuggestions"
                 android:maxLines="1"
                 android:singleLine="true" />
 
@@ -73,23 +73,5 @@
 
         </LinearLayout>
     </ScrollView>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-        <Button
-            android:id="@+id/main_sign_in"
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginRight="40dp"
-            android:layout_marginTop="157dp"
-            android:gravity="center_vertical|center_horizontal"
-            android:text="Button" />
-
-    </RelativeLayout>
 
 </merge>
