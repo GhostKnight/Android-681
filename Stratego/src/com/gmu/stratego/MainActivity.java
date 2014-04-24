@@ -9,9 +9,11 @@ import com.gmu.stratego.json.User;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -31,7 +33,7 @@ public class MainActivity extends Activity {
 		userField = (EditText) findViewById(R.id.username);
 		passwordField = (EditText) findViewById(R.id.password);
 		findViewById(R.id.sign_in_button).setOnClickListener(
-				new View.OnClickListener() {
+				new OnClickListener() {
 					@Override
 					public void onClick(View view) {
 						if (!validateUser())
@@ -50,17 +52,29 @@ public class MainActivity extends Activity {
 								public void afterTask(String result) {
 									Toast.makeText(getBaseContext(), "Response received!", Toast.LENGTH_LONG).show();
 									Log.d("Got a response!!!", result);
+									// TODO Add conditional here if the login was successful or not
+									// TODO Then use the intent that is below
+									
+									
+									// final Intent i = new Intent(MainActivity.this,
+									// LoginActivity.class);
+									// startActivity(i);
 								}
 							};
 							postTask.execute(URLS.LOGIN);
-							// final Intent i = new Intent(MainActivity.this,
-							// LoginActivity.class);
-							// startActivity(i);
 						} catch (Exception e) {
 							Log.e("Exception", "Login Exception", e);
 						}
 					}
 				});
+		findViewById(R.id.create_user).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// Go to create user layout
+				final Intent i = new Intent(MainActivity.this, CreateUserActivity.class);
+				startActivity(i);
+			}
+		});
 		// final Button main = (Button) findViewById(R.id.main_sign_in);
 	}
 

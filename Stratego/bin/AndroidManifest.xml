@@ -39,6 +39,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.gmu.stratego.MainActivity" />
         </activity>
+        <activity
+            android:name="com.gmu.stratego.CreateUserActivity"
+            android:label="@string/title_activity_create_user"
+            android:parentActivityName="com.gmu.stratego.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.gmu.stratego.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

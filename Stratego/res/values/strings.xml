@@ -4,10 +4,11 @@
     <string name="app_name">Stratego</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-	<string name="title">Stratego</string>
-	<string name="username">Username:</string>
-	<string name="password">Password:</string>
-	<string name="login_button">Login</string>
-	<string name="prompt_username">Username</string>
-	
+    <string name="title">Stratego</string>
+    <string name="username">Username:</string>
+    <string name="password">Password:</string>
+    <string name="login_button">Login</string>
+    <string name="prompt_username">Username</string>
+    <string name="title_activity_create_user">Create User</string>
+
 </resources>
