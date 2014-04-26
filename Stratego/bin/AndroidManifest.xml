@@ -47,6 +47,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.gmu.stratego.MainActivity" />
         </activity>
+        <activity
+            android:name="com.gmu.stratego.StrategoBoardActivity"
+            android:label="@string/title_activity_stratego_board" >
+        </activity>
     </application>
 
 </manifest>

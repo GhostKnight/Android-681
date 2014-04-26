@@ -27,46 +27,48 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		client = StrategoClient.getInstance(this);
-		
+
 		userField = (EditText) findViewById(R.id.username);
 		passwordField = (EditText) findViewById(R.id.password);
-		findViewById(R.id.sign_in_button).setOnClickListener(
-				new OnClickListener() {
-					@Override
-					public void onClick(View view) {
-						if (!validateUser())
-							return;
-						try {
-							final JSONObject user = new JSONObject();
-							user.accumulate("username", userField.getText());
-							user.accumulate("password", passwordField.getText());
-							final StrategoHttpTask postTask = new StrategoHttpTask() {
-								@Override
-								public String performTask(String... urls) {
-									return client.POST(urls[0], user);
-								}
-
-								@Override
-								public void afterTask(String result) {
-									Toast.makeText(getBaseContext(), "Response received!", Toast.LENGTH_LONG).show();
-									Log.d("Got a response!!!", result);
-									// TODO Add conditional here if the login was successful or not
-									// TODO Then use the intent that is below
-									
-									
-									// final Intent i = new Intent(MainActivity.this,
-									// LoginActivity.class);
-									// startActivity(i);
-								}
-							};
-							postTask.execute(URLS.LOGIN);
-						} catch (Exception e) {
-							Log.e("Exception", "Login Exception", e);
+		findViewById(R.id.sign_in_button).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				if (!validateUser())
+					return;
+				try {
+					final JSONObject user = new JSONObject();
+					user.accumulate("username", userField.getText());
+					user.accumulate("password", passwordField.getText());
+					final StrategoHttpTask postTask = new StrategoHttpTask() {
+						@Override
+						public String performTask(String... urls) {
+							return client.POST(urls[0], user);
 						}
-					}
-				});
+
+						@Override
+						public void afterTask(String result) {
+							Toast.makeText(getBaseContext(), "Response received!", Toast.LENGTH_LONG).show();
+							Log.d("Got a response!!!", result);
+							// TODO Add conditional here if the login was
+							// successful or not
+							// TODO Then use the intent that is below
+
+							if (result.contains("errors")) {
+								
+							} else {
+								final Intent i = new Intent(MainActivity.this, StrategoBoardActivity.class);
+								startActivity(i);
+							}
+						}
+					};
+					postTask.execute(URLS.LOGIN);
+				} catch (Exception e) {
+					Log.e("Exception", "Login Exception", e);
+				}
+			}
+		});
 		findViewById(R.id.create_user).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {

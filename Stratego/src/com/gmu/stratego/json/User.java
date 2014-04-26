@@ -1,22 +1,27 @@
 package com.gmu.stratego.json;
 
-public class User {
-	private String username;
-	private String password;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-	public String getUsername() {
-		return username;
+public class User extends JSONObject {
+	public User(String username, String password) throws JSONException {
+		setUsername(username);
+		setPassword(password);
 	}
-
-	public void setUsername(String username) {
-		this.username = username;
+	
+	public void setUsername(String username) throws JSONException {
+		put("username", username);
 	}
-
-	public String getPassword() {
-		return password;
+	
+	public String getUsername() throws JSONException {
+		return getString("username");
 	}
-
-	public void setPassword(String password) {
-		this.password = password;
+	
+	public void setPassword(String password) throws JSONException {
+		put("password", password);
+	}
+	
+	public String getPassword() throws JSONException {
+		return getString("password");
 	}
 }
