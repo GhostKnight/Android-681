@@ -12,8 +12,8 @@
         android:orientation="vertical" >
 
         <TableLayout
-            android:layout_width="500dp"
-            android:layout_height="500dp"
+            android:layout_width="505dp"
+            android:layout_height="505dp"
             android:background="@drawable/classic_board" >
 
             <TableRow

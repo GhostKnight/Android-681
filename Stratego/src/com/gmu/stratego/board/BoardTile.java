@@ -12,6 +12,7 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -57,10 +58,13 @@ public class BoardTile extends View {
 
 	private void draw() {
 		if (currentUnit != null) {
-			
+			Rect rect = new Rect(0, 0, 60, 60); // TODO: figure out how to do this rectangle bullshit
+			currentUnit.setBounds(rect);
+			currentUnit.draw(canvas);
+			canvas.drawPaint(paint);
+		} else {
+			canvas.drawRect(0, 0, 60, 60, paint);
 		}
-		
-		canvas.drawRect(0, 0, 60, 60, paint);
 	}
 	
 	public void changeBlack() {
@@ -70,6 +74,11 @@ public class BoardTile extends View {
 	
 	public void changeBlue() {
 		paint.setColor(Color.BLUE);
+		invalidate();
+	}
+	
+	public void changeRed() {
+		paint.setColor(Color.RED);
 		invalidate();
 	}
 	
@@ -119,9 +128,6 @@ public class BoardTile extends View {
 		}
 		
 		currentUnit = getResources().getDrawable(pieceNum);
-		Rect rect = new Rect(); // TODO: figure out how to do this rectangle bullshit
-		currentUnit.setBounds(rect);
-//		drawable.draw(canvas);
-		
+		invalidate();
 	}
 }
