@@ -120,4 +120,12 @@ public class StrategoAction extends JSONObject {
 	public int getY() throws JSONException {
 		return getInt("y");
 	}
+	
+	public void setNewX(final int x) throws JSONException {
+		put("newX",x);
+	}
+	
+	public void setNewY(final int y) throws JSONException {
+		put("newY", y);
+	}
 }

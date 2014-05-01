@@ -7,9 +7,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -55,6 +57,21 @@ public class StrategoClient {
 			return true;
 		else
 			return false;
+	}
+	
+	public String GET(String url) {
+		String result = "";
+		try {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet httpGet = new HttpGet(new URI(url));
+			HttpResponse httpResponse = httpClient.execute(httpGet);
+			final InputStream msgContent = httpResponse.getEntity().getContent();
+			result = convertInputStreamToString(msgContent);
+		} catch (Exception e) {
+			Log.e("Error", "Error GET", e);
+		}
+		
+		return result;
 	}
 
 	public String POST(String url, JSONObject json) {

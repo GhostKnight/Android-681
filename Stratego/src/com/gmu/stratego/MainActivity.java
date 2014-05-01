@@ -49,16 +49,18 @@ public class MainActivity extends Activity {
 
 						@Override
 						public void afterTask(String result) {
-							Toast.makeText(getBaseContext(), "Response received!", Toast.LENGTH_LONG).show();
 							Log.d("Got a response!!!", result);
 							// TODO Add conditional here if the login was
 							// successful or not
 							// TODO Then use the intent that is below
 
-							if (result.contains("errors")) {
-								
-							} else {
-								final Intent i = new Intent(MainActivity.this, StrategoBoardActivity.class);
+							if (result.contains("errors") || result.toLowerCase().contains("invalid")) {
+								Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
+								userField.setText("");
+								passwordField.setText("");
+							} else {								
+								//final Intent i = new Intent(MainActivity.this, StrategoBoardActivity.class);
+								final Intent i = new Intent(MainActivity.this, Lobby.class);
 								startActivity(i);
 							}
 						}
