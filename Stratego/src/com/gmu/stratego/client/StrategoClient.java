@@ -10,11 +10,16 @@ import java.io.InputStreamReader;
 import java.net.URI;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.json.JSONObject;
 
 import android.app.Activity;
@@ -25,12 +30,21 @@ import android.util.Log;
 /**
  * @author Tim
  *
+ * This class holds the session and all the GET and POST code
+ * that the program uses in order to communicate with the server.
  */
 public class StrategoClient {
 	
 	private static StrategoClient instance;
 	private final ConnectivityManager connMgr;
+	private final CookieStore cookieStore = new BasicCookieStore();
+	private final HttpContext httpContext = new BasicHttpContext();
 	
+	/**
+	 * This is called by the main activity when the application first starts
+	 * @param mainActivity - reference to the main activity
+	 * @return
+	 */
 	public static StrategoClient getInstance(final Activity mainActivity) {
 		if (instance == null) {
 			instance = new StrategoClient(mainActivity);
@@ -44,6 +58,7 @@ public class StrategoClient {
 	
 	private StrategoClient(Activity mainActivity) {
 		connMgr = (ConnectivityManager) mainActivity.getSystemService(Activity.CONNECTIVITY_SERVICE);
+		httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
 	}
 
 	/**
@@ -64,7 +79,7 @@ public class StrategoClient {
 		try {
 			HttpClient httpClient = new DefaultHttpClient();
 			HttpGet httpGet = new HttpGet(new URI(url));
-			HttpResponse httpResponse = httpClient.execute(httpGet);
+			HttpResponse httpResponse = httpClient.execute(httpGet, httpContext);
 			final InputStream msgContent = httpResponse.getEntity().getContent();
 			result = convertInputStreamToString(msgContent);
 		} catch (Exception e) {
@@ -78,40 +93,19 @@ public class StrategoClient {
 		InputStream inputStream = null;
 		String result = "";
 		try {
-			// 1. create HttpClient
 			HttpClient httpclient = new DefaultHttpClient();
-
-			// 2. make POST request to the given URL
 			HttpPost httpPost = new HttpPost(url);
-
-			// 3. build jsonObject
-
-			// 4. convert JSONObject to JSON to String
+			// Convert the given json object to its stirng form
 			final String jsonString = json.toString();
-
-			// ** Alternative way to convert Person object to JSON string usin
-			// Jackson Lib
-			// ObjectMapper mapper = new ObjectMapper();
-			// json = mapper.writeValueAsString(person);
-
-			// 5. set json to StringEntity
 			final StringEntity se = new StringEntity(jsonString);
-
-			// 6. set httpPost Entity
+			// Set the contents of the post
 			httpPost.setEntity(se);
-
-			// 7. Set some headers to inform server about the type of the
-			// content
 			httpPost.setHeader("Accept", "application/json");
 			httpPost.setHeader("Content-type", "application/json");
-
-			// 8. Execute POST request to the given URL
-			HttpResponse httpResponse = httpclient.execute(httpPost);
-
-			// 9. receive response as inputStream
+			// Execute the POST
+			HttpResponse httpResponse = httpclient.execute(httpPost, httpContext);
+			// Get the response
 			inputStream = httpResponse.getEntity().getContent();
-
-			// 10. convert inputstream to string
 			if (inputStream != null)
 				result = convertInputStreamToString(inputStream);
 			else
@@ -120,9 +114,17 @@ public class StrategoClient {
 		} catch (Exception e) {
 			Log.d("InputStream", e.getLocalizedMessage());
 		}
-
-		// 11. return result
+		
 		return result;
+	}
+	
+	/**
+	 * This method should only be called when a user logs out, this will
+	 * clear the cookiestore and cause the cookies/sessions that were there
+	 * to be garbage collected by java
+	 */
+	public void resetSession() {
+		cookieStore.clear();
 	}
 
 	private static String convertInputStreamToString(InputStream inputStream)

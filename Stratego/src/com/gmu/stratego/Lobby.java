@@ -1,5 +1,9 @@
 package com.gmu.stratego;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.gmu.stratego.client.StrategoClient;
@@ -20,6 +24,7 @@ import android.widget.Toast;
 public class Lobby extends Activity {
 	private StrategoClient client;
 	private TableLayout gameTable;
+	private List<String> listOfGames = new ArrayList<String>(0);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -57,8 +62,12 @@ public class Lobby extends Activity {
 					@Override
 					public void afterTask(String result) {
 						Log.d("Create game result", result);
-						
-						// TODO: Move to a new board and set the id
+						try {
+							JSONObject response = new JSONObject(result);
+							response.getString("_id");
+						} catch (JSONException e) {
+							Log.e("", "Error on create game response", e);
+						}
 					}
 				};
 				createGameTask.execute(URLS.POST_CREATE_GAME);
@@ -107,6 +116,21 @@ public class Lobby extends Activity {
 	 */
 	private void setupActionBar() {
 		getActionBar().setDisplayHomeAsUpEnabled(true);
+	}
+	
+	private void addGameToList(String id) {
+		TableRow testRow = new TableRow(gameTable.getContext());
+		testRow.setClickable(true);
+		final TextView test = new TextView(testRow.getContext());
+		test.setText(id);
+		testRow.setOnClickListener(new OnClickListener() {					
+			@Override
+			public void onClick(View v) {
+				Toast.makeText(getBaseContext(), test.getText() + " Clicked" , Toast.LENGTH_SHORT).show();
+			}
+		});
+		testRow.addView(test);
+		gameTable.addView(testRow);
 	}
 
 	@Override
