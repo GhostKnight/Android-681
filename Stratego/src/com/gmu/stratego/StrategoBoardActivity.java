@@ -1,5 +1,8 @@
 package com.gmu.stratego;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.json.JSONObject;
 
 import com.gmu.stratego.board.Board;
@@ -13,16 +16,26 @@ import android.app.Activity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Toast;
 
 public class StrategoBoardActivity extends Activity {
-	private Board board;
 	private BoardTile selectedTile = null;
 	private StrategoClient client;
+	private String gameID;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_stratego_board);
+		
+		// Get the params that were passed
+		if (getIntent().getExtras().containsKey("id")) {
+			gameID = getIntent().getExtras().getString("id");
+			Toast.makeText(getBaseContext(), "Joined game with ID: " + gameID, Toast.LENGTH_LONG).show();
+		} else {
+			Toast.makeText(getBaseContext(), "Fatal error occured, no game ID was provided", Toast.LENGTH_LONG).show();
+			finish();
+		}
 		
 		client = StrategoClient.getInstance();
 		
@@ -37,13 +50,15 @@ public class StrategoBoardActivity extends Activity {
 		findViewById(R.id.tile57).setVisibility(View.INVISIBLE);
 		//board = new Board(getBaseContext());
 		//setContentView(board);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.stratego_board, menu);
-		return true;
+		
+		final Timer gameState = new Timer();
+		gameState.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				Log.d("Running state timer", "Running game state timer");
+				getGameState();
+			}
+		}, 5000, 10000);
 	}
 	
 	public synchronized void setSelectedSpace(final BoardTile selectedTile) {
@@ -55,17 +70,18 @@ public class StrategoBoardActivity extends Activity {
 	}
 	
 	public synchronized void getGameState() {
+		final String url = URLS.GET_GAME_STATE.replace(":id", gameID);
 		StrategoHttpTask task = new StrategoHttpTask() {
-			
 			@Override
 			public String performTask(String... urls) {
-				return client.GET(URLS.GET_GAME_STATE);//client;
+				return client.GET(url);//client;
 			}
 			
 			@Override
 			public void afterTask(String result) {
-				
+				Log.d("Game State", result);
 			}
 		};
+		task.execute(url);
 	}
 }

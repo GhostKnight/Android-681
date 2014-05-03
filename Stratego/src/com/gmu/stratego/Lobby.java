@@ -3,6 +3,7 @@ package com.gmu.stratego;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,8 +13,9 @@ import com.gmu.stratego.client.URLS;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TableLayout;
@@ -25,6 +27,8 @@ public class Lobby extends Activity {
 	private StrategoClient client;
 	private TableLayout gameTable;
 	private List<String> listOfGames = new ArrayList<String>(0);
+	private View selectedGame = null;
+	private String selectedGameID;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +39,27 @@ public class Lobby extends Activity {
 		
 		gameTable = (TableLayout) findViewById(R.id.lobby_table);
 		client = StrategoClient.getInstance();
+		
+		// Set up the join game button
+		findViewById(R.id.join_game_button).setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				// If there is no game selected, propagate error to user and return
+				if (selectedGame == null) {
+					Toast.makeText(getBaseContext(), "Must select a game to join", Toast.LENGTH_LONG).show();
+					return;
+				}
+				
+				// Else lets start up the new game board
+				final Intent boardIntent = new Intent(Lobby.this, StrategoBoardActivity.class);
+				final Bundle params = new Bundle();
+				params.putString("id", selectedGameID);
+				boardIntent.putExtras(params);
+				startActivity(boardIntent);
+				// Close out the lobby activity
+				finish();
+			}
+		});
 		
 		findViewById(R.id.refresh_lobby_button).setOnClickListener(new OnClickListener() {
 			@Override
@@ -62,9 +87,11 @@ public class Lobby extends Activity {
 					@Override
 					public void afterTask(String result) {
 						Log.d("Create game result", result);
+						if (!result.contains("_id"))
+							return;
 						try {
 							JSONObject response = new JSONObject(result);
-							response.getString("_id");
+							addGameToList(response.getString("_id"));
 						} catch (JSONException e) {
 							Log.e("", "Error on create game response", e);
 						}
@@ -93,19 +120,18 @@ public class Lobby extends Activity {
 			@Override
 			public void afterTask(String result) {
 				Log.d("GET GAMES result", result);
+				if (!result.contains("_id"))
+					return;
 				
-				TableRow testRow = new TableRow(gameTable.getContext());
-				testRow.setClickable(true);
-				testRow.setOnClickListener(new OnClickListener() {					
-					@Override
-					public void onClick(View v) {
-						Toast.makeText(getBaseContext(), "Clicked on a row!", Toast.LENGTH_SHORT).show();
+				try {
+					JSONArray response = new JSONArray(result);
+					for (int i=0; i<response.length(); i++) {
+						addGameToList(response.getJSONObject(i).getString("_id"));
 					}
-				});
-				TextView test = new TextView(testRow.getContext());
-				test.setText("Hello!  This is a test...");
-				testRow.addView(test);
-				gameTable.addView(testRow);
+					refreshTable();
+				} catch (Exception e) {
+					Log.e("Error", "Error in get games", e);
+				}
 			}
 		};
 		refreshGameList.execute(URLS.GET_GAMES);
@@ -118,7 +144,14 @@ public class Lobby extends Activity {
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 	
-	private void addGameToList(String id) {
+	private void refreshTable() {
+		gameTable.removeAllViews();
+		for (String gameID : listOfGames) {
+			addGameView(gameID);
+		}
+	}
+	
+	private void addGameView(final String id) {
 		TableRow testRow = new TableRow(gameTable.getContext());
 		testRow.setClickable(true);
 		final TextView test = new TextView(testRow.getContext());
@@ -126,18 +159,29 @@ public class Lobby extends Activity {
 		testRow.setOnClickListener(new OnClickListener() {					
 			@Override
 			public void onClick(View v) {
-				Toast.makeText(getBaseContext(), test.getText() + " Clicked" , Toast.LENGTH_SHORT).show();
+				selectGame(v, id);
 			}
 		});
 		testRow.addView(test);
 		gameTable.addView(testRow);
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.lobby, menu);
-		return true;
+	
+	private void selectGame(final View game, String id) {
+		if (selectedGame != null) {
+			selectedGame.setBackgroundColor(Color.WHITE);
+			selectedGame.invalidate();
+		}
+		
+		selectedGame = game;
+		selectedGameID = id;
+		selectedGame.setBackgroundColor(Color.LTGRAY);
+		selectedGame.invalidate();
 	}
-
+	
+	private void addGameToList(String id) {
+		if (listOfGames.contains(id))
+			return;
+		listOfGames.add(id);
+		addGameView(id);
+	}
 }
