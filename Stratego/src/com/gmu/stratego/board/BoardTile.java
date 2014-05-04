@@ -1,6 +1,8 @@
 package com.gmu.stratego.board;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import com.gmu.stratego.R;
@@ -9,6 +11,7 @@ import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;
 import com.gmu.stratego.json.StrategoAction;
+import com.gmu.stratego.util.StrategoConstants;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
@@ -38,6 +41,7 @@ public class BoardTile extends View {
 	private int teamColor;
 	private int unitPower;
 	private StrategoClient client;
+	private Integer numberOfUnits = null;
 
 	public BoardTile(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
@@ -70,23 +74,8 @@ public class BoardTile extends View {
 		client = StrategoClient.getInstance();
 		
 		// List of all of the deployment squares
-		// TODO: move this to a static class?
-		deploymentSquares.add(R.id.deployment01);
-		deploymentSquares.add(R.id.deployment02);
-		deploymentSquares.add(R.id.deployment03);
-		deploymentSquares.add(R.id.deployment04);
-		deploymentSquares.add(R.id.deployment05);
-		deploymentSquares.add(R.id.deployment06);
-		deploymentSquares.add(R.id.deployment07);
-		deploymentSquares.add(R.id.deployment08);
-		deploymentSquares.add(R.id.deployment11);
-		deploymentSquares.add(R.id.deployment12);
-		deploymentSquares.add(R.id.deployment13);
-		deploymentSquares.add(R.id.deployment14);
-		deploymentSquares.add(R.id.deployment15);
-		deploymentSquares.add(R.id.deployment16);
-		deploymentSquares.add(R.id.deployment17);
-		deploymentSquares.add(R.id.deployment18);
+		deploymentSquares.addAll(Arrays.asList(StrategoConstants.DEP_TABLE_IDS));
+		
 		
 		setOnLongClickListener(new OnLongClickListener() {
 			@Override
@@ -113,40 +102,39 @@ public class BoardTile extends View {
 	protected class DragListener implements OnDragListener{
 		@Override
 		public boolean onDrag(View v, DragEvent event) {
-			if (event.getAction() == DragEvent.ACTION_DROP) {
-				Log.d("", "DROPPED ON: " + x + ", " + y + ", Data: " + event.getClipData().getItemAt(0).getText());
-				final StrategoBoardActivity context = (StrategoBoardActivity) getContext();
-				final String gameID = context.getGameID(); // Could possibly do this earlier but here is safest in case of game change
-				final String url = URLS.POST_ACTION.replace(":id", gameID);
-				final StringBuilder builder = new StringBuilder(event.getClipData().getItemAt(0).getText());
-				final int temp = Integer.parseInt(builder.toString().split(":")[0]);
-				final int unitPower = Integer.parseInt(builder.toString().split(":")[1]);
-				final String unitType = (temp == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
-				final StrategoHttpTask task = new StrategoHttpTask() {
-					@Override
-					public String performTask(String... urls) {
-						try {
-							StrategoAction placement = new StrategoAction(StrategoAction.PLACE_PIECE, client.getUser());
-							placement.setX(x);
-							placement.setY(y);
-							placement.setPieceValue(unitPower);
-							placement.setPieceType(unitType);
-							return client.POST(url, placement);
-						} catch (Exception e) {
-							Log.e("", "", e);
-						}
-						return null;
-					}
-					
-					@Override
-					public void afterTask(String result) {
-						// TODO create update method in table and call it here
-						Log.d("Placement response: ", result);
-					}
-				};
-				task.execute(url);
+			if (event.getAction() != DragEvent.ACTION_DROP || currentUnit != null)
 				return true;
-			}
+			Log.d("", "DROPPED ON: " + x + ", " + y + ", Data: " + event.getClipData().getItemAt(0).getText());
+			final StrategoBoardActivity context = (StrategoBoardActivity) getContext();
+			final String gameID = context.getGameID(); // Could possibly do this earlier but here is safest in case of game change
+			final String url = URLS.POST_ACTION.replace(":id", gameID);
+			final StringBuilder builder = new StringBuilder(event.getClipData().getItemAt(0).getText());
+			final int temp = Integer.parseInt(builder.toString().split(":")[0]);
+			final int unitPower = Integer.parseInt(builder.toString().split(":")[1]);
+			final String unitType = (temp == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
+			final StrategoHttpTask task = new StrategoHttpTask() {
+				@Override
+				public String performTask(String... urls) {
+					try {
+						StrategoAction placement = new StrategoAction(StrategoAction.PLACE_PIECE, client.getUser());
+						placement.setX(x);
+						placement.setY(y);
+						placement.setPieceValue(unitPower);
+						placement.setPieceType(unitType);
+						return client.POST(url, placement);
+					} catch (Exception e) {
+						Log.e("", "", e);
+					}
+					return null;
+				}
+				
+				@Override
+				public void afterTask(String result) {
+					// TODO change this to get new actions only
+					context.getGameState(); 
+				}
+			};
+			task.execute(url);
 			return true;
 		}
 	}
@@ -182,6 +170,11 @@ public class BoardTile extends View {
 	
 	public void changeBlue() {
 		paint.setColor(Color.BLUE);
+		invalidate();
+	}
+	
+	public void changeYellow() {
+		paint.setColor(Color.YELLOW);
 		invalidate();
 	}
 	
@@ -239,5 +232,18 @@ public class BoardTile extends View {
 		this.unitPower = unitPower;
 		currentUnit = getResources().getDrawable(pieceNum);
 		invalidate();
+	}
+	
+	/**
+	 * This method should be called when getting a confirmed response from the server saying
+	 * that the placement of a users piece was legal and the placement has officially occurred.
+	 * 
+	 * This method essentially cleans up the units that can be placed.
+	 */
+	public void useOneUnit() {
+		numberOfUnits--;
+		if (numberOfUnits.intValue() == 0) {
+			this.setVisibility(INVISIBLE);
+		}
 	}
 }

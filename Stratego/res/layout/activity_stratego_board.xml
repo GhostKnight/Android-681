@@ -12,7 +12,7 @@
         android:orientation="vertical" >
 
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/gameBoardHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Game View" />
@@ -686,7 +686,7 @@
         </TableLayout>
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/deploymentLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Deployment Board"

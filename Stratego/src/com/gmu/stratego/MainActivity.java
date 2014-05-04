@@ -6,7 +6,6 @@ import org.json.JSONObject;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;
-import com.gmu.stratego.json.User;
 
 import android.os.Bundle;
 import android.app.Activity;
@@ -19,8 +18,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-
-	protected User user = null;
+	
 	protected EditText userField, passwordField;
 	protected StrategoClient client;
 
@@ -66,7 +64,6 @@ public class MainActivity extends Activity {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
 								}
-								//final Intent i = new Intent(MainActivity.this, StrategoBoardActivity.class);
 								final Intent i = new Intent(MainActivity.this, Lobby.class);
 								startActivity(i);
 							}
