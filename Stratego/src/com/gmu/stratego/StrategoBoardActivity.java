@@ -3,9 +3,6 @@ package com.gmu.stratego;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.JSONObject;
-
-import com.gmu.stratego.board.Board;
 import com.gmu.stratego.board.BoardTile;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
@@ -13,8 +10,8 @@ import com.gmu.stratego.client.URLS;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.graphics.Color;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
 
@@ -59,6 +56,8 @@ public class StrategoBoardActivity extends Activity {
 				getGameState();
 			}
 		}, 5000, 10000);
+		
+		setUpDeploymentBoard();
 	}
 	
 	public synchronized void setSelectedSpace(final BoardTile selectedTile) {
@@ -74,14 +73,30 @@ public class StrategoBoardActivity extends Activity {
 		StrategoHttpTask task = new StrategoHttpTask() {
 			@Override
 			public String performTask(String... urls) {
-				return client.GET(url);//client;
+				return client.GET(url);
 			}
 			
 			@Override
 			public void afterTask(String result) {
+				
 				Log.d("Game State", result);
 			}
 		};
 		task.execute(url);
+	}
+	
+	public String getGameID() {
+		return gameID;
+	}
+	
+	private void setUpDeploymentBoard() {
+		((BoardTile) findViewById(R.id.deployment01)).setImage(Color.RED, 1);
+		((BoardTile) findViewById(R.id.deployment02)).setImage(Color.RED, 2);
+		((BoardTile) findViewById(R.id.deployment03)).setImage(Color.RED, 3);
+		((BoardTile) findViewById(R.id.deployment04)).setImage(Color.RED, 4);
+		((BoardTile) findViewById(R.id.deployment05)).setImage(Color.RED, 5);
+		((BoardTile) findViewById(R.id.deployment06)).setImage(Color.RED, 6);
+		((BoardTile) findViewById(R.id.deployment07)).setImage(Color.RED, 7);
+		((BoardTile) findViewById(R.id.deployment08)).setImage(Color.RED, 8);
 	}
 }

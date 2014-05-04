@@ -32,16 +32,19 @@ public class StrategoAction extends JSONObject {
 	final public static String RED_PIECE = "RedPiece";
 	final public static String BLUE_PIECE = "BluePiece";
 	
-	public StrategoAction(final String actionType, final String username, final boolean admin, 
-			final String _id, final int x, final int y, final String pieceType,
+	public StrategoAction(final String actionType, final JSONObject user) throws JSONException {
+		super();
+		setActionType(actionType);
+		put("user", user);
+		put("piece", new JSONObject());
+	}
+	
+	public StrategoAction(final String actionType, final JSONObject user, final int x, final int y, final String pieceType,
 			final int pieceValue, final String actionID) throws JSONException {
 		super();
-		put("user", new JSONObject());
+		put("user", user);
 		put("piece", new JSONObject());
 		setActionType(actionType);
-		setUsername(username);
-		setAdmin(admin);
-		setID(_id);
 		setX(x);
 		setY(y);
 		setPieceType(pieceType);

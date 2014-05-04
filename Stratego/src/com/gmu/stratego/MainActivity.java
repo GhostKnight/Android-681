@@ -1,5 +1,6 @@
 package com.gmu.stratego;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.gmu.stratego.client.StrategoClient;
@@ -58,7 +59,13 @@ public class MainActivity extends Activity {
 								Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
 								userField.setText("");
 								passwordField.setText("");
-							} else {								
+							} else {			
+								try {
+									client.setUser(new JSONObject(result));
+								} catch (JSONException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
 								//final Intent i = new Intent(MainActivity.this, StrategoBoardActivity.class);
 								final Intent i = new Intent(MainActivity.this, Lobby.class);
 								startActivity(i);

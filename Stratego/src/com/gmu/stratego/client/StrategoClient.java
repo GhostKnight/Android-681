@@ -39,6 +39,7 @@ public class StrategoClient {
 	private final ConnectivityManager connMgr;
 	private final CookieStore cookieStore = new BasicCookieStore();
 	private final HttpContext httpContext = new BasicHttpContext();
+	private JSONObject user;
 	
 	/**
 	 * This is called by the main activity when the application first starts
@@ -102,6 +103,7 @@ public class StrategoClient {
 			httpPost.setEntity(se);
 			httpPost.setHeader("Accept", "application/json");
 			httpPost.setHeader("Content-type", "application/json");
+			httpPost.setHeader("CsrfToken", "nocheck");
 			// Execute the POST
 			HttpResponse httpResponse = httpclient.execute(httpPost, httpContext);
 			// Get the response
@@ -124,6 +126,7 @@ public class StrategoClient {
 	 * to be garbage collected by java
 	 */
 	public void resetSession() {
+		user = null;
 		cookieStore.clear();
 	}
 
@@ -139,5 +142,13 @@ public class StrategoClient {
 		inputStream.close();
 		return result;
 
+	}
+
+	public void setUser(JSONObject user) {
+		this.user = user;
+	}
+	
+	public JSONObject getUser() {
+		return user;
 	}
 }

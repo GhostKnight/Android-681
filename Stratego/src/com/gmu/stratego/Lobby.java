@@ -50,14 +50,28 @@ public class Lobby extends Activity {
 					return;
 				}
 				
-				// Else lets start up the new game board
-				final Intent boardIntent = new Intent(Lobby.this, StrategoBoardActivity.class);
-				final Bundle params = new Bundle();
-				params.putString("id", selectedGameID);
-				boardIntent.putExtras(params);
-				startActivity(boardIntent);
-				// Close out the lobby activity
-				finish();
+				final String url = URLS.POST_JOIN_GAME.replace(":id", selectedGameID);
+				StrategoHttpTask task = new StrategoHttpTask() {
+					@Override
+					public String performTask(String... urls) {
+						try {
+							return client.POST(url, new JSONObject().put("id", selectedGameID));
+						} catch (JSONException e) {
+							Log.e("", "", e);
+						}
+						return null;
+					}
+					
+					@Override
+					public void afterTask(String result) {
+						Log.d("Join game:", result);
+						if (result.toLowerCase().contains("error")) {
+							return;
+						}
+						joinGame();
+					}
+				};
+				task.execute(url);
 			}
 		});
 		
@@ -87,13 +101,20 @@ public class Lobby extends Activity {
 					@Override
 					public void afterTask(String result) {
 						Log.d("Create game result", result);
-						if (!result.contains("_id"))
+						
+						if (result.contains("id: ")) {
+							Log.d("Setting selected", "selecteGameID is now: " + result.split("id: ")[1]);
+							selectedGameID = result.replace("\"", "").split("id: ")[1];
+							Toast.makeText(getBaseContext(), "You already have a game in progress, continuing that game", Toast.LENGTH_LONG).show();
+							joinGame();
 							return;
-						try {
-							JSONObject response = new JSONObject(result);
-							addGameToList(response.getString("_id"));
-						} catch (JSONException e) {
-							Log.e("", "Error on create game response", e);
+						}else if (result.contains("_id")) {
+							try {
+								JSONObject response = new JSONObject(result);
+								addGameToList(response.getString("_id"));
+							} catch (JSONException e) {
+								Log.e("", "Error on create game response", e);
+							}
 						}
 					}
 				};
@@ -103,6 +124,16 @@ public class Lobby extends Activity {
 		
 		// refresh games when the view opens
 		refreshGames();
+	}
+	
+	private void joinGame() {
+		final Intent boardIntent = new Intent(Lobby.this, StrategoBoardActivity.class);
+		final Bundle params = new Bundle();
+		params.putString("id", selectedGameID);
+		boardIntent.putExtras(params);
+		startActivity(boardIntent);
+		// Close out the lobby activity
+		finish();
 	}
 	
 	private void refreshGames() {
@@ -122,7 +153,6 @@ public class Lobby extends Activity {
 				Log.d("GET GAMES result", result);
 				if (!result.contains("_id"))
 					return;
-				
 				try {
 					JSONArray response = new JSONArray(result);
 					for (int i=0; i<response.length(); i++) {
