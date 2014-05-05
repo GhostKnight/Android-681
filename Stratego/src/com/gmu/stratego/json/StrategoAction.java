@@ -32,6 +32,12 @@ public class StrategoAction extends JSONObject {
 	final public static String RED_PIECE = "RedPiece";
 	final public static String BLUE_PIECE = "BluePiece";
 	
+	final private static String[] fields = { "user", "piece", "actionId", "type", "x", "y", "newX", "newY" };
+	
+	public StrategoAction(JSONObject json) throws JSONException {
+		super(json, fields);
+	}
+	
 	public StrategoAction(final String actionType, final JSONObject user) throws JSONException {
 		super();
 		setActionType(actionType);
@@ -40,7 +46,7 @@ public class StrategoAction extends JSONObject {
 	}
 	
 	public StrategoAction(final String actionType, final JSONObject user, final int x, final int y, final String pieceType,
-			final int pieceValue, final String actionID) throws JSONException {
+			final int pieceValue, final int actionID) throws JSONException {
 		super();
 		put("user", user);
 		put("piece", new JSONObject());
@@ -52,12 +58,12 @@ public class StrategoAction extends JSONObject {
 		setActionID(actionID);
 	}
 	
-	public void setActionID(final String actionID) throws JSONException {
+	public void setActionID(final int actionID) throws JSONException {
 		put("actionId", actionID);
 	}
 	
-	public String getActionID() throws JSONException {
-		return getString("actionId");
+	public int getActionID() throws JSONException {
+		return getInt("actionId");
 	}
 	
 	public void setPieceValue(final int value) throws JSONException {

@@ -2,7 +2,6 @@ package com.gmu.stratego.board;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import com.gmu.stratego.R;
@@ -17,7 +16,6 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipData.Item;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -29,7 +27,6 @@ import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 public class BoardTile extends View {
 	private int x;
@@ -131,7 +128,7 @@ public class BoardTile extends View {
 				@Override
 				public void afterTask(String result) {
 					// TODO change this to get new actions only
-					context.getGameState(); 
+					context.startGameCheckTimer(); 
 				}
 			};
 			task.execute(url);
@@ -153,7 +150,9 @@ public class BoardTile extends View {
 	}
 
 	private void draw() {
-		if (currentUnit != null) {
+		if (numberOfUnits != null && numberOfUnits.intValue() == 0) {
+			this.setVisibility(INVISIBLE);
+		} else if (currentUnit != null) {
 			Rect rect = new Rect(0, 0, 60, 60); // TODO: figure out how to do this rectangle bullshit
 			currentUnit.setBounds(rect);
 			currentUnit.draw(canvas);
@@ -183,7 +182,7 @@ public class BoardTile extends View {
 		invalidate();
 	}
 	
-	public void setImage(int teamColor, int unitPower) {
+	public BoardTile setImage(int teamColor, int unitPower) {
 		int pieceNum = 0;
 		boolean isRed = teamColor == Color.RED;
 		switch(unitPower) {
@@ -232,6 +231,7 @@ public class BoardTile extends View {
 		this.unitPower = unitPower;
 		currentUnit = getResources().getDrawable(pieceNum);
 		invalidate();
+		return this;
 	}
 	
 	/**
@@ -241,9 +241,16 @@ public class BoardTile extends View {
 	 * This method essentially cleans up the units that can be placed.
 	 */
 	public void useOneUnit() {
+		if (numberOfUnits == null)
+			return;
+		
 		numberOfUnits--;
 		if (numberOfUnits.intValue() == 0) {
 			this.setVisibility(INVISIBLE);
 		}
+	}
+	
+	public void setNumUnit(int numUnit) {
+		numberOfUnits = numUnit;
 	}
 }

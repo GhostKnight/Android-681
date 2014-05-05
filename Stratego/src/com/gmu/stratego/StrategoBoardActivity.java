@@ -1,5 +1,6 @@
 package com.gmu.stratego;
 
+import java.security.acl.LastOwnerException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -21,6 +22,7 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.TableLayout;
 import android.widget.Toast;
 
@@ -31,6 +33,9 @@ public class StrategoBoardActivity extends Activity {
 	private String stringColor;
 	private int playerColor;
 	private String gamePhase;
+	private boolean deploymentBoardSetup = false;
+	private Timer gameStateTimer;
+	private int latestAction;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -57,17 +62,31 @@ public class StrategoBoardActivity extends Activity {
 		findViewById(R.id.tile52).setVisibility(View.INVISIBLE);
 		findViewById(R.id.tile56).setVisibility(View.INVISIBLE);
 		findViewById(R.id.tile57).setVisibility(View.INVISIBLE);
-		//board = new Board(getBaseContext());
-		//setContentView(board);
+		getGameState();
 		
-		final Timer gameState = new Timer();
-		gameState.schedule(new TimerTask() {
+		findViewById(R.id.commitButton).setOnClickListener(new OnClickListener() {
 			@Override
-			public void run() {
-				Log.d("Running state timer", "Running game state timer");
-				getGameState();
+			public void onClick(View v) {
+				final String url = URLS.POST_ACTION.replace(":id", gameID);
+				StrategoHttpTask task = new StrategoHttpTask() {
+					@Override
+					public String performTask(String... urls) {
+						try {
+							return client.POST(url, new StrategoAction(StrategoAction.COMMIT_ACTION, client.getUser()));
+						} catch (JSONException e) {
+							Log.e("", "", e);
+						}
+						return null;
+					}
+					
+					@Override
+					public void afterTask(String result) {
+						
+					}
+				};
+				task.execute(url);
 			}
-		}, 5000, 10000);
+		});
 	}
 	
 	public synchronized void setSelectedSpace(final BoardTile selectedTile) {
@@ -90,6 +109,7 @@ public class StrategoBoardActivity extends Activity {
 			public void afterTask(String result) {
 				processGameState(result);
 				Log.d("Game State", result);
+				startGameCheckTimer();
 			}
 		};
 		task.execute(url);
@@ -108,10 +128,9 @@ public class StrategoBoardActivity extends Activity {
 			}
 			setUpDeploymentBoard();
 			
-			JSONArray actions = gameState.getJSONArray("actionList");
+			final JSONArray actions = gameState.getJSONArray("actionList");
 			for (int i=0; i < actions.length(); i++) {
-				JSONObject action = (JSONObject) actions.get(i);
-				
+				processAction(new StrategoAction(actions.getJSONObject(i)));
 			}
 		} catch (Exception e) {
 			Log.e("", "", e);
@@ -126,6 +145,7 @@ public class StrategoBoardActivity extends Activity {
 	 * @throws JSONException
 	 */
 	private void processAction(StrategoAction action) throws JSONException {
+		latestAction = action.getActionID();
 		final int y = action.getInt("y") - 1; // Adjustment for Chris's board
 		final int x = action.getInt("x") - 1;
 		final String pieceType = action.getPieceType();
@@ -136,15 +156,25 @@ public class StrategoBoardActivity extends Activity {
 			piecePower = 13;
 		}
 		final boolean redPiece = pieceType.equals("RedPiece");
-		StringBuilder tileID = new StringBuilder("tile");
+		final StringBuilder tileID = new StringBuilder("tile");
 		tileID.append(y);
 		tileID.append(x);
 		final int id = getResources().getIdentifier(tileID.toString(), "id", getBaseContext().getPackageName());
 		final BoardTile tile = (BoardTile) findViewById(id);
 		tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
 		
-		if (gamePhase.equals("PLACE_PIECES")) {
+		if (gamePhase.equals("PLACE_PIECES") && piecePower != 13) {
 			// TODO set up the numbers here... Also remember to check if the user has a current game and auto join it
+			final StringBuilder deploymentID = new StringBuilder("deployment");
+			piecePower = action.getPieceValue();
+			if (piecePower >= 9) {
+				deploymentID.append("1").append(piecePower - 8);
+			} else {
+				deploymentID.append("0").append(piecePower);
+			}
+			final BoardTile deploymentTile = (BoardTile) findViewById(getResources().getIdentifier(deploymentID.toString(), "id", getBaseContext().getPackageName()));
+			if (deploymentTile != null)
+				deploymentTile.useOneUnit();
 			setUpDeploymentBoard();
 		}
 	}
@@ -154,6 +184,52 @@ public class StrategoBoardActivity extends Activity {
 	 */
 	public String getGameID() {
 		return gameID;
+	}
+	
+	public void startGameCheckTimer() {
+		if (gameStateTimer != null) {
+			gameStateTimer.cancel();
+			gameStateTimer.purge();
+			gameStateTimer = null;
+		}
+		gameStateTimer = new Timer();
+		gameStateTimer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				getNewActions();
+			}
+		}, 0, 7000);
+	}
+	
+	private void getNewActions() {
+		final String url = URLS.GET_GAME_ACTIONS.replace(":id", gameID) + ((latestAction > 0) ? "?lastActionId=" + latestAction : "");
+		StrategoHttpTask task = new StrategoHttpTask() {
+			@Override
+			public String performTask(String... urls) {
+				return client.GET(url);
+			}
+			
+			@Override
+			public void afterTask(String result) {
+				Log.d("new actions", result);
+				if (!result.equals("[ ]")) {  // if there are new actions
+					try {
+						processNewActions(result);
+					} catch (JSONException e) {
+						Log.e("", "", e);
+					}
+				}
+			}
+		};
+		task.execute(url);
+	}
+	
+	private void processNewActions(String actions) throws JSONException {
+		Log.e("Actions!", actions);
+		JSONArray jsonActions = new JSONArray(actions);
+		for (int i=0; i < jsonActions.length(); i++) {
+			processAction(new StrategoAction(jsonActions.getJSONObject(i)));
+		}
 	}
 	
 	/**
@@ -177,18 +253,21 @@ public class StrategoBoardActivity extends Activity {
 			return;
 		}
 		
-		((BoardTile) findViewById(R.id.deployment01)).setImage(playerColor, 1);
-		((BoardTile) findViewById(R.id.deployment02)).setImage(playerColor, 2);
-		((BoardTile) findViewById(R.id.deployment03)).setImage(playerColor, 3);
-		((BoardTile) findViewById(R.id.deployment04)).setImage(playerColor, 4);
-		((BoardTile) findViewById(R.id.deployment05)).setImage(playerColor, 5);
-		((BoardTile) findViewById(R.id.deployment06)).setImage(playerColor, 6);
-		((BoardTile) findViewById(R.id.deployment07)).setImage(playerColor, 7);
-		((BoardTile) findViewById(R.id.deployment08)).setImage(playerColor, 8);
-		((BoardTile) findViewById(R.id.deployment11)).setImage(playerColor, 9);
-		((BoardTile) findViewById(R.id.deployment12)).setImage(playerColor, 10);
-		((BoardTile) findViewById(R.id.deployment13)).setImage(playerColor, 11);
-		((BoardTile) findViewById(R.id.deployment14)).setImage(playerColor, 12);
+		if (!deploymentBoardSetup ) {
+			((BoardTile) findViewById(R.id.deployment01)).setImage(playerColor, 1).setNumUnit(1); // One Spy
+			((BoardTile) findViewById(R.id.deployment02)).setImage(playerColor, 2).setNumUnit(8); // Eight scouts
+			((BoardTile) findViewById(R.id.deployment03)).setImage(playerColor, 3).setNumUnit(5); // Five Sappers/Miners
+			((BoardTile) findViewById(R.id.deployment04)).setImage(playerColor, 4).setNumUnit(4); // Four Sergeant
+			((BoardTile) findViewById(R.id.deployment05)).setImage(playerColor, 5).setNumUnit(4); // Four Lieutenant
+			((BoardTile) findViewById(R.id.deployment06)).setImage(playerColor, 6).setNumUnit(4); // Four Captain
+			((BoardTile) findViewById(R.id.deployment07)).setImage(playerColor, 7).setNumUnit(3); // Three Majors
+			((BoardTile) findViewById(R.id.deployment08)).setImage(playerColor, 8).setNumUnit(2); // Two Colonels
+			((BoardTile) findViewById(R.id.deployment11)).setImage(playerColor, 9).setNumUnit(1); // One General
+			((BoardTile) findViewById(R.id.deployment12)).setImage(playerColor, 10).setNumUnit(1); // One Marshal
+			((BoardTile) findViewById(R.id.deployment13)).setImage(playerColor, 11).setNumUnit(6); // Six bombs
+			((BoardTile) findViewById(R.id.deployment14)).setImage(playerColor, 12).setNumUnit(1); // One Flag
+			deploymentBoardSetup = true;
+		}
 		
 		Integer[] depZone = (playerColor == Color.RED) ? StrategoConstants.RED_DEP_ZONE : StrategoConstants.BLUE_DEP_ZONE; 
 		for (int i = 0; i < depZone.length; i++) {
