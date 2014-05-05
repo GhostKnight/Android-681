@@ -186,6 +186,8 @@ public class BoardTile extends View {
 		int pieceNum = 0;
 		boolean isRed = teamColor == Color.RED;
 		switch(unitPower) {
+		case 0:
+			break;
 		case 1:
 			pieceNum = (isRed) ? R.drawable.r1 : R.drawable.b1;
 			break;
@@ -229,7 +231,7 @@ public class BoardTile extends View {
 		
 		this.teamColor = teamColor;
 		this.unitPower = unitPower;
-		currentUnit = getResources().getDrawable(pieceNum);
+		currentUnit = (unitPower != 0) ? getResources().getDrawable(pieceNum) : null;
 		invalidate();
 		return this;
 	}

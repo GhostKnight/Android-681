@@ -13,6 +13,7 @@ import com.gmu.stratego.client.URLS;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.util.Log;
@@ -68,7 +69,8 @@ public class Lobby extends Activity {
 						if (result.toLowerCase().contains("error")) {
 							return;
 						}
-						joinGame();
+						joinGame(selectedGameID, Lobby.this);
+						finish();
 					}
 				};
 				task.execute(url);
@@ -106,7 +108,8 @@ public class Lobby extends Activity {
 							Log.d("Setting selected", "selecteGameID is now: " + result.split("id: ")[1]);
 							selectedGameID = result.replace("\"", "").split("id: ")[1];
 							Toast.makeText(getBaseContext(), "You already have a game in progress, continuing that game", Toast.LENGTH_LONG).show();
-							joinGame();
+							joinGame(selectedGameID, Lobby.this);
+							finish();
 							return;
 						}else if (result.contains("_id")) {
 							try {
@@ -126,14 +129,17 @@ public class Lobby extends Activity {
 		refreshGames();
 	}
 	
-	private void joinGame() {
-		final Intent boardIntent = new Intent(Lobby.this, StrategoBoardActivity.class);
+	/**
+	 * Joins the given game from the given action
+	 * @param id
+	 * @param activity
+	 */
+	public static void joinGame(final String id, Activity activity) {
+		final Intent boardIntent = new Intent(activity.getBaseContext(), StrategoBoardActivity.class);
 		final Bundle params = new Bundle();
-		params.putString("id", selectedGameID);
+		params.putString("id", id);
 		boardIntent.putExtras(params);
-		startActivity(boardIntent);
-		// Close out the lobby activity
-		finish();
+		activity.startActivity(boardIntent);
 	}
 	
 	private void refreshGames() {

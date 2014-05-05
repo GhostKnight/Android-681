@@ -87,7 +87,7 @@ public class StrategoAction extends JSONObject {
 	}
 	
 	public String getActionType() throws JSONException {
-		return getString("type");
+		return (has("type") ? getString("type") : "");
 	}
 	
 	public void setUsername(final String username) throws JSONException {
@@ -134,7 +134,15 @@ public class StrategoAction extends JSONObject {
 		put("newX",x);
 	}
 	
+	public int getNewX() throws JSONException {
+		return getInt("newX");
+	}
+	
 	public void setNewY(final int y) throws JSONException {
 		put("newY", y);
+	}
+	
+	public int getNewY() throws JSONException {
+		return getInt("newY");
 	}
 }

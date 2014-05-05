@@ -59,10 +59,13 @@ public class MainActivity extends Activity {
 								passwordField.setText("");
 							} else {			
 								try {
-									client.setUser(new JSONObject(result));
+									final JSONObject user = new JSONObject(result);
+									client.setUser(user);
+									if (user.has("currentGameId")) {
+										Lobby.joinGame(user.getString("currentGameId"), MainActivity.this);
+									}
 								} catch (JSONException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+									Log.e("", "", e);
 								}
 								final Intent i = new Intent(MainActivity.this, Lobby.class);
 								startActivity(i);

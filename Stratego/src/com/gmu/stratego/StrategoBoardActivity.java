@@ -146,8 +146,8 @@ public class StrategoBoardActivity extends Activity {
 	 */
 	private void processAction(StrategoAction action) throws JSONException {
 		latestAction = action.getActionID();
-		final int y = action.getInt("y") - 1; // Adjustment for Chris's board
-		final int x = action.getInt("x") - 1;
+		int y = action.getInt("y") - 1; // Adjustment for Chris's board
+		int x = action.getInt("x") - 1;
 		final String pieceType = action.getPieceType();
 		int piecePower = action.getPieceValue();
 		// If the color isn't our piece, change the value to 13 so we hide it
@@ -156,12 +156,16 @@ public class StrategoBoardActivity extends Activity {
 			piecePower = 13;
 		}
 		final boolean redPiece = pieceType.equals("RedPiece");
-		final StringBuilder tileID = new StringBuilder("tile");
-		tileID.append(y);
-		tileID.append(x);
-		final int id = getResources().getIdentifier(tileID.toString(), "id", getBaseContext().getPackageName());
+		final int id = StrategoConstants.boardIDs[x][y];
 		final BoardTile tile = (BoardTile) findViewById(id);
-		tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
+		if (action.getActionType().equals(StrategoAction.MOVE_ACTION)) {
+			tile.setImage((redPiece) ? Color.RED : Color.BLUE,  0); // mark old tile blank
+			x = action.getNewX() - 1;
+			y = action.getNewY() - 1;
+			((BoardTile) findViewById(StrategoConstants.boardIDs[x][y])).setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
+		} else {
+			tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
+		}
 		
 		if (gamePhase.equals("PLACE_PIECES") && piecePower != 13) {
 			// TODO set up the numbers here... Also remember to check if the user has a current game and auto join it
