@@ -7,6 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.gmu.stratego.board.StrategoBoardActivity;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;

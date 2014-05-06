@@ -1,4 +1,4 @@
-package com.gmu.stratego;
+package com.gmu.stratego.board;
 
 import java.security.acl.LastOwnerException;
 import java.util.ArrayList;
@@ -10,7 +10,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.gmu.stratego.board.BoardTile;
+import com.gmu.stratego.R;
+import com.gmu.stratego.R.id;
+import com.gmu.stratego.R.layout;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;
@@ -19,6 +21,7 @@ import com.gmu.stratego.util.StrategoConstants;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
@@ -94,9 +97,14 @@ public class StrategoBoardActivity extends Activity {
 			this.selectedTile.changeBlack();
 		}
 		this.selectedTile = selectedTile;
-		selectedTile.changeBlue();	
+		selectedTile.changeBlue();
+		Toast.makeText(getBaseContext(), "This unit can move: " + StrategoConstants.allowedMoves[selectedTile.getUnitPower()], Toast.LENGTH_LONG).show();
 	}
 	
+	/**
+	 * Request the game state, upon receiving a response go ahead and start the
+	 * polling timer for new actions.
+	 */
 	public synchronized void getGameState() {
 		final String url = URLS.GET_GAME_STATE.replace(":id", gameID);
 		StrategoHttpTask task = new StrategoHttpTask() {
@@ -115,18 +123,25 @@ public class StrategoBoardActivity extends Activity {
 		task.execute(url);
 	}
 	
+	/**
+	 * Process a GameState message type
+	 * @param state
+	 */
 	private void processGameState(final String state) {
 		try {
 			JSONObject gameState = new JSONObject(state);
 			gamePhase = gameState.getString("phase");
 			
 			// Process what player we are
-			if (gameState.getJSONObject("bluePlayer").getString("_id").equals(client.getUser().getString("_id"))) {
+			if (gameState.has("bluePlayer") && gameState.getJSONObject("bluePlayer").getString("_id").equals(client.getUser().getString("_id"))) {
 				playerColor = Color.BLUE;
 			} else {
 				playerColor = Color.RED;
 			}
-			setUpDeploymentBoard();
+			if (gamePhase.equals("PLACE_PIECES"))
+				setUpDeploymentBoard();
+			else
+				hideDeploymentBoard();
 			
 			final JSONArray actions = gameState.getJSONArray("actionList");
 			for (int i=0; i < actions.length(); i++) {
@@ -138,6 +153,23 @@ public class StrategoBoardActivity extends Activity {
 	}
 	
 	/**
+	 * Hide deployment board, also cleans up the yellow spaces on the board
+	 */
+	private void hideDeploymentBoard() {
+		// clean up label, commit button and the deployment board (should not be visible regardless)
+		findViewById(R.id.deploymentLabel).setVisibility(View.INVISIBLE);
+		findViewById(R.id.commitButton).setVisibility(View.INVISIBLE);
+		for (int dep : StrategoConstants.DEP_TABLE_IDS) {
+			findViewById(dep).setVisibility(View.INVISIBLE);
+		}
+		// Cleanup deployment zones
+		final Integer[] cleanup = (playerColor == Color.RED) ? StrategoConstants.RED_DEP_ZONE : StrategoConstants.BLUE_DEP_ZONE;
+		for (int dep : cleanup) {
+			((BoardTile) findViewById(dep)).changeBlack();
+		}
+	}
+
+	/**
 	 * This method handles the processing of incoming actions to the game.  When we get
 	 * a response from the server we have this method pick through the details that were passed
 	 * to the client and from the determine what needs to be drawn.
@@ -146,6 +178,9 @@ public class StrategoBoardActivity extends Activity {
 	 */
 	private void processAction(StrategoAction action) throws JSONException {
 		latestAction = action.getActionID();
+		if (action.getActionType().equals(StrategoAction.COMMIT_ACTION))
+			return;
+		
 		int y = action.getInt("y") - 1; // Adjustment for Chris's board
 		int x = action.getInt("x") - 1;
 		final String pieceType = action.getPieceType();
@@ -156,13 +191,13 @@ public class StrategoBoardActivity extends Activity {
 			piecePower = 13;
 		}
 		final boolean redPiece = pieceType.equals("RedPiece");
-		final int id = StrategoConstants.boardIDs[x][y];
+		final int id = StrategoConstants.boardIDs[y][x];
 		final BoardTile tile = (BoardTile) findViewById(id);
 		if (action.getActionType().equals(StrategoAction.MOVE_ACTION)) {
 			tile.setImage((redPiece) ? Color.RED : Color.BLUE,  0); // mark old tile blank
 			x = action.getNewX() - 1;
 			y = action.getNewY() - 1;
-			((BoardTile) findViewById(StrategoConstants.boardIDs[x][y])).setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
+			((BoardTile) findViewById(StrategoConstants.boardIDs[y][x])).setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
 		} else {
 			tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
 		}
@@ -278,5 +313,16 @@ public class StrategoBoardActivity extends Activity {
 			// TODO highlight square yellow
 			((BoardTile)findViewById(depZone[i])).changeYellow();
 		}
+	}
+	
+	public static void displayCombatPopup() {
+		// 1. Instantiate an AlertDialog.Builder with its constructor
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+		// 2. Chain together various setter methods to set the dialog characteristics
+		//builder.setView(new View()).setTitle("COMBAT");
+
+		// 3. Get the AlertDialog from create()
+		AlertDialog dialog = builder.create();
 	}
 }

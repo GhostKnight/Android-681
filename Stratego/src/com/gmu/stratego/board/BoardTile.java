@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.gmu.stratego.R;
-import com.gmu.stratego.StrategoBoardActivity;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;
@@ -36,7 +35,7 @@ public class BoardTile extends View {
 	private Canvas canvas;
 	private final List<Integer> deploymentSquares = new ArrayList<Integer>(0);
 	private int teamColor;
-	private int unitPower;
+	private int unitPower = 13;
 	private StrategoClient client;
 	private Integer numberOfUnits = null;
 
@@ -79,8 +78,10 @@ public class BoardTile extends View {
 			public boolean onLongClick(View v) {
 				if (currentUnit == null || !deploymentSquares.contains(getId()))
 					return false;
-				
-				Item item = new Item(Integer.toString(teamColor) + ":" + Integer.toString(unitPower));
+				// 0 team color
+				// 1 unit power
+				// 2 sourceID
+				Item item = new Item(Integer.toString(teamColor) + ":" + Integer.toString(unitPower) + ":" + getId());
 				String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_HTML};
 				ClipData dragData = new ClipData((CharSequence) v.getTag(), mimeTypes, item);
 				View.DragShadowBuilder myShadow = new DragShadowBuilder(v);
@@ -108,17 +109,23 @@ public class BoardTile extends View {
 			final StringBuilder builder = new StringBuilder(event.getClipData().getItemAt(0).getText());
 			final int temp = Integer.parseInt(builder.toString().split(":")[0]);
 			final int unitPower = Integer.parseInt(builder.toString().split(":")[1]);
+			final int sourceID = Integer.parseInt(builder.toString().split(":")[2]);
 			final String unitType = (temp == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
 			final StrategoHttpTask task = new StrategoHttpTask() {
 				@Override
 				public String performTask(String... urls) {
 					try {
-						StrategoAction placement = new StrategoAction(StrategoAction.PLACE_PIECE, client.getUser());
-						placement.setX(x);
-						placement.setY(y);
-						placement.setPieceValue(unitPower);
-						placement.setPieceType(unitType);
-						return client.POST(url, placement);
+						StrategoAction json = new StrategoAction(client.getUser(), 0);
+						if (deploymentSquares.contains(sourceID)) {
+							json.setActionType(StrategoAction.PLACE_PIECE);
+							json.setX(x);
+							json.setY(y);
+							json.setPieceValue(unitPower);
+							json.setPieceType(unitType);
+						} else {
+							
+						}
+						return client.POST(url, json);
 					} catch (Exception e) {
 						Log.e("", "", e);
 					}
@@ -177,9 +184,22 @@ public class BoardTile extends View {
 		invalidate();
 	}
 	
+	public boolean isYellow() {
+		return paint.getColor() == Color.YELLOW;
+	}
+	
+	// TODO red is hard to see, just use yellow
 	public void changeRed() {
 		paint.setColor(Color.RED);
 		invalidate();
+	}
+	
+	public Integer getUnitPower() {
+		return unitPower;
+	}
+	
+	public Integer getTeamColor() {
+		return teamColor;
 	}
 	
 	public BoardTile setImage(int teamColor, int unitPower) {

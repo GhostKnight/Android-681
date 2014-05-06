@@ -38,6 +38,12 @@ public class StrategoAction extends JSONObject {
 		super(json, fields);
 	}
 	
+	public StrategoAction(final JSONObject user, int i) throws JSONException {
+		super();
+		put("user", user);
+		put("piece", new JSONObject());
+	}
+	
 	public StrategoAction(final String actionType, final JSONObject user) throws JSONException {
 		super();
 		setActionType(actionType);
