@@ -20,6 +20,7 @@ import com.gmu.stratego.json.StrategoAction;
 import com.gmu.stratego.util.StrategoConstants;
 
 import android.os.Bundle;
+import android.R.integer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -90,7 +91,7 @@ public class StrategoBoardActivity extends Activity {
 					
 					@Override
 					public void afterTask(String result) {
-						
+						Log.d("Commit results: ", result);
 					}
 				};
 				task.execute(url);
@@ -99,12 +100,55 @@ public class StrategoBoardActivity extends Activity {
 	}
 	
 	public synchronized void setSelectedSpace(final BoardTile selectedTile) {
-		if (this.selectedTile != null) {
-			this.selectedTile.changeBlack();
-		}
+//		if (this.selectedTile != null) {
+//			this.selectedTile.changeBlack();
+//		}
+		cleanupBoard();
 		this.selectedTile = selectedTile;
 		selectedTile.changeBlue();
-		Toast.makeText(getBaseContext(), "This unit can move: " + StrategoConstants.allowedMoves[selectedTile.getUnitPower()], Toast.LENGTH_LONG).show();
+		final int x = selectedTile.getXLoc() - 1;
+		final int y = selectedTile.getYLoc() - 1;
+		boolean xPosDone = false;
+		boolean xNegDone = false;
+		boolean yNegDone = false;
+		boolean yPosDone = false;
+		for (int i=1; i <= StrategoConstants.allowedMoves[selectedTile.getUnitPower()]; i++) {
+			// Positive X direction
+			if (x < 9 && !xPosDone) {
+				BoardTile xPos = (BoardTile)findViewById(StrategoConstants.boardIDs[y][x + i]);
+				if (xPos.getTeamColor() != playerColor)
+					xPos.changeYellow();
+				if (xPos.getUnitPower() != 0)
+					xPosDone = true;
+			}
+			// Negative X direction
+			if (x > 0 && !xNegDone) {
+				BoardTile xNeg = (BoardTile)findViewById(StrategoConstants.boardIDs[y][x - i]);
+				if (xNeg.getTeamColor() != playerColor)
+					xNeg.changeYellow();
+				if (xNeg.getUnitPower() != 0) {
+					xNegDone = true;
+				}
+			}
+			// Positive Y direction
+			if (y < 9 && !yPosDone) {
+				BoardTile yPos = (BoardTile) findViewById(StrategoConstants.boardIDs[y + i][x]);
+				if (yPos.getTeamColor() != playerColor)
+					yPos.changeYellow();
+				if (yPos.getUnitPower() != 0) {
+					yPosDone = true;
+				}
+			}
+			// Negative Y direction
+			if (y > 0 && !yNegDone) {
+				BoardTile yNeg = (BoardTile) findViewById(StrategoConstants.boardIDs[y - i][x]);
+				if (yNeg.getTeamColor() != playerColor)
+					yNeg.changeYellow();
+				if (yNeg.getUnitPower() != 0) {
+					yNegDone = true;
+				}
+			}
+		}
 	}
 	
 	/**
@@ -154,6 +198,7 @@ public class StrategoBoardActivity extends Activity {
 			for (int i=0; i < actions.length(); i++) {
 				processAction(new StrategoAction(actions.getJSONObject(i)));
 			}
+			cleanupBoard();
 		} catch (Exception e) {
 			Log.e("", "", e);
 		}
@@ -190,6 +235,46 @@ public class StrategoBoardActivity extends Activity {
 		
 		int y = action.getInt("y") - 1; // Adjustment for Chris's board
 		int x = action.getInt("x") - 1;
+		final int id = StrategoConstants.boardIDs[y][x];
+		final BoardTile tile = (BoardTile) findViewById(id);
+		if (action.getActionType().equals(StrategoAction.MOVE_ACTION)) {
+			// Movement actions don't come with this information so lets get it ourselves
+			final int pieceType = tile.getTeamColor();
+			final int piecePower = tile.getUnitPower();
+			tile.setImage(pieceType,  0); // mark old tile blank
+			x = action.getNewX() - 1;
+			y = action.getNewY() - 1;
+			// Mark the new tile with the new unit
+			((BoardTile) findViewById(StrategoConstants.boardIDs[y][x])).setImage(pieceType, piecePower);
+			return; // Handled MOVE_ACTION
+		} else if (action.getActionType().equals(StrategoAction.ATTACK_ACTION)) {
+			// Handle an attack message
+			final int attackerStr = action.getJSONObject("attacker").getInt("value");
+			final int defenderStr = action.getJSONObject("defender").getInt("value");
+			final int attackerColor = (action.getJSONObject("attacker").getString("type").equals("RedPiece")) ? Color.RED : Color.BLUE;
+			final int bluePiece = (attackerColor != Color.RED) ? StrategoConstants.BLUE_PIECES[attackerStr] : StrategoConstants.BLUE_PIECES[defenderStr];
+			final int redPiece = (attackerColor != Color.BLUE) ? StrategoConstants.RED_PIECES[attackerStr] : StrategoConstants.RED_PIECES[defenderStr];
+			final String attackResult = action.getString("result");
+			final boolean redWins = attackerColor == Color.RED &&  !attackResult.equals("ATTACKER_DIES");
+			// display the combat dialog
+			displayCombatPopup(bluePiece, redPiece, redWins);
+
+			final int oldX = action.getInt("x") - 1;
+			final int oldY = action.getInt("y") - 1;
+			
+			// Update the GUI
+			if (!attackResult.equals("ATTACKER_DIES")) {
+				final int newX = action.getInt("newX") - 1;
+				final int newY = action.getInt("newY") - 1;
+				((BoardTile)findViewById(StrategoConstants.boardIDs[oldY][oldX])).setImage(attackerColor, 0); // clear off old tile
+				((BoardTile)findViewById(StrategoConstants.boardIDs[newY][newX])).setImage(attackerColor, attackerStr);
+			} else {
+				// The attacker died, so just eliminate him from the map
+				((BoardTile)findViewById(StrategoConstants.boardIDs[oldY][oldX])).setImage(attackerColor, 0); // clear off old tile
+			}
+			return;
+		}
+		
 		final String pieceType = action.getPieceType();
 		int piecePower = action.getPieceValue();
 		// If the color isn't our piece, change the value to 13 so we hide it
@@ -198,16 +283,7 @@ public class StrategoBoardActivity extends Activity {
 			piecePower = 13;
 		}
 		final boolean redPiece = pieceType.equals("RedPiece");
-		final int id = StrategoConstants.boardIDs[y][x];
-		final BoardTile tile = (BoardTile) findViewById(id);
-		if (action.getActionType().equals(StrategoAction.MOVE_ACTION)) {
-			tile.setImage((redPiece) ? Color.RED : Color.BLUE,  0); // mark old tile blank
-			x = action.getNewX() - 1;
-			y = action.getNewY() - 1;
-			((BoardTile) findViewById(StrategoConstants.boardIDs[y][x])).setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
-		} else {
-			tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
-		}
+		tile.setImage((redPiece) ? Color.RED : Color.BLUE, piecePower);
 		
 		if (gamePhase.equals("PLACE_PIECES") && piecePower != 13) {
 			// TODO set up the numbers here... Also remember to check if the user has a current game and auto join it
@@ -277,6 +353,7 @@ public class StrategoBoardActivity extends Activity {
 		for (int i=0; i < jsonActions.length(); i++) {
 			processAction(new StrategoAction(jsonActions.getJSONObject(i)));
 		}
+		cleanupBoard();
 	}
 	
 	/**
@@ -323,25 +400,13 @@ public class StrategoBoardActivity extends Activity {
 		}
 	}
 	
-	public static void displayCombatPopup(Context context) {
+	public void displayCombatPopup(int bluePiece, int redPiece, boolean redWins) {
 		// 1. Instantiate an AlertDialog.Builder with its constructor
-		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		AlertDialog.Builder builder = new AlertDialog.Builder(StrategoBoardActivity.this);
 
 		// 2. Chain together various setter methods to set the dialog characteristics
-		builder.setView(new StrategoCombatView(context, R.drawable.b1, R.drawable.r10, false))
-			.setTitle("COMBAT")
-			.setOnCancelListener(new OnCancelListener() {
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					// TODO start timer
-				}
-			})
-			.setOnDismissListener(new OnDismissListener() {
-				@Override
-				public void onDismiss(DialogInterface dialog) {
-					// TODO start timer
-				}
-			});
+		builder.setView(new StrategoCombatView(StrategoBoardActivity.this, bluePiece, redPiece, redWins))
+			.setTitle("COMBAT");
 
 		// 3. Get the AlertDialog from create()
 		AlertDialog dialog = builder.create();
@@ -353,5 +418,13 @@ public class StrategoBoardActivity extends Activity {
 	    lp.height = 250;
 	    dialog.show();
 	    dialog.getWindow().setAttributes(lp);
+	}
+	
+	private void cleanupBoard() {
+		for (int x=0; x < 10; x++) {
+			for (int y=0; y < 10; y++) {
+				((BoardTile) findViewById(StrategoConstants.boardIDs[y][x])).changeBlack();
+			}
+		}
 	}
 }

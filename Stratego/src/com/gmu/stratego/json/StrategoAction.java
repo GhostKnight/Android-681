@@ -32,7 +32,7 @@ public class StrategoAction extends JSONObject {
 	final public static String RED_PIECE = "RedPiece";
 	final public static String BLUE_PIECE = "BluePiece";
 	
-	final private static String[] fields = { "user", "piece", "actionId", "type", "x", "y", "newX", "newY" };
+	final private static String[] fields = { "user", "piece", "actionId", "type", "x", "y", "newX", "newY", "result", "attacker", "defender" };
 	
 	public StrategoAction(JSONObject json) throws JSONException {
 		super(json, fields);

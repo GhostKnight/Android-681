@@ -35,7 +35,7 @@ public class BoardTile extends View {
 	private Canvas canvas;
 	private final List<Integer> deploymentSquares = new ArrayList<Integer>(0);
 	private int teamColor;
-	private int unitPower = 13;
+	private int unitPower = 0;
 	private StrategoClient client;
 	private Integer numberOfUnits = null;
 
@@ -76,8 +76,6 @@ public class BoardTile extends View {
 		setOnLongClickListener(new OnLongClickListener() {
 			@Override
 			public boolean onLongClick(View v) {
-				if (currentUnit == null || !deploymentSquares.contains(getId()))
-					return false;
 				// 0 team color
 				// 1 unit power
 				// 2 sourceID
@@ -102,21 +100,21 @@ public class BoardTile extends View {
 	protected class DragListener implements OnDragListener{
 		@Override
 		public boolean onDrag(View v, DragEvent event) {
-			if (event.getAction() != DragEvent.ACTION_DROP || currentUnit != null)
+			if (event.getAction() != DragEvent.ACTION_DROP)
 				return true;
 			Log.d("", "DROPPED ON: " + x + ", " + y + ", Data: " + event.getClipData().getItemAt(0).getText());
 			final StrategoBoardActivity context = (StrategoBoardActivity) getContext();
 			final String gameID = context.getGameID(); // Could possibly do this earlier but here is safest in case of game change
 			final String url = URLS.POST_ACTION.replace(":id", gameID);
 			final StringBuilder builder = new StringBuilder(event.getClipData().getItemAt(0).getText());
-			final int temp = Integer.parseInt(builder.toString().split(":")[0]);
-			final int unitPower = Integer.parseInt(builder.toString().split(":")[1]);
+			final int sourceColor = Integer.parseInt(builder.toString().split(":")[0]);
+			final int sourceUnitPower = Integer.parseInt(builder.toString().split(":")[1]);
 			final int sourceID = Integer.parseInt(builder.toString().split(":")[2]);
 			final int sourceX = Integer.parseInt(builder.toString().split(":")[3]);
 			final int sourceY = Integer.parseInt(builder.toString().split(":")[4]);
-			final String unitType = (temp == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
+			final String unitType = (sourceColor == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
 			// don't want to handle an event to ourselves...
-			if (!deploymentSquares.contains(sourceID) && StrategoConstants.boardIDs[sourceY][sourceX] == getId()) {
+			if (!deploymentSquares.contains(sourceID) && StrategoConstants.boardIDs[sourceY-1][sourceX-1] == getId()) {
 				Log.d("", "fml");
 				return true;
 			}
@@ -125,21 +123,20 @@ public class BoardTile extends View {
 				public String performTask(String... urls) {
 					try {
 						StrategoAction json = new StrategoAction(client.getUser(), 0);
-						json.setPieceValue(unitPower);
+						json.setPieceValue(sourceUnitPower);
 						json.setPieceType(unitType);
 						if (deploymentSquares.contains(sourceID)) {
-							Log.d("","HELLO!");
 							json.setActionType(StrategoAction.PLACE_PIECE);
 							json.setX(x);
 							json.setY(y);
-						} else if (currentUnit == null) {
-							Log.d("", "HELLO2");
-							json.setActionType(StrategoAction.MOVE_ACTION);
+						} else {
+							json.setActionType((isRedHighlight()) ? StrategoAction.ATTACK_ACTION : StrategoAction.MOVE_ACTION);
 							json.setX(sourceX);
 							json.setY(sourceY);
 							json.setNewX(x);
 							json.setNewY(y);
 						}
+						Log.d("Sending JSON", json.toString());
 						return client.POST(url, json);
 					} catch (Exception e) {
 						Log.e("", "", e);
@@ -198,11 +195,17 @@ public class BoardTile extends View {
 		if (currentUnit == null) {
 			paint.setColor(Color.YELLOW);
 			invalidate();
+		} else {
+			changeRed();
 		}
 	}
 	
 	public boolean isYellow() {
 		return paint.getColor() == Color.YELLOW;
+	}
+	
+	public boolean isRedHighlight() {
+		return paint.getColor() == Color.RED;
 	}
 	
 	// TODO red is hard to see, just use yellow
@@ -291,5 +294,13 @@ public class BoardTile extends View {
 	
 	public void setNumUnit(int numUnit) {
 		numberOfUnits = numUnit;
+	}
+	
+	public int getXLoc() {
+		return x;
+	}
+	
+	public int getYLoc() {
+		return y;
 	}
 }
