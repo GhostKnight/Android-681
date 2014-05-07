@@ -52,4 +52,18 @@ public final class StrategoConstants {
 	 * This is a map that holds the allowed moves for each piece.  Indexed by unit power 
 	 */
 	public static final Integer[] allowedMoves = {0, 1, 10, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0};
+	
+	/**
+	 * Shortcut to red piece IDs index 0 is nothing because there is no unit with power of 0
+	 */
+	public static final Integer[] RED_PIECES = { 0, R.drawable.r1, R.drawable.r2, R.drawable.r3, R.drawable.r4,
+			R.drawable.r5, R.drawable.r6, R.drawable.r7, R.drawable.r8, R.drawable.r9, R.drawable.r10, R.drawable.r11,
+			R.drawable.r12, R.drawable.r13 };
+
+	/**
+	 * Shortcut to blue piece IDs index 0 is nothing because there is no unit with power of 0
+	 */
+	public static final Integer[] BLUE_PIECES = { 0, R.drawable.b1, R.drawable.b2, R.drawable.b3, R.drawable.b4,
+			R.drawable.b5, R.drawable.b6, R.drawable.b7, R.drawable.b8, R.drawable.b9, R.drawable.b10, R.drawable.b11,
+			R.drawable.b12, R.drawable.b13 };
 }

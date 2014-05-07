@@ -3,6 +3,7 @@ package com.gmu.stratego;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.gmu.stratego.board.StrategoBoardActivity;
 import com.gmu.stratego.client.StrategoClient;
 import com.gmu.stratego.client.StrategoHttpTask;
 import com.gmu.stratego.client.URLS;
@@ -78,6 +79,14 @@ public class MainActivity extends Activity {
 				}
 			}
 		});
+		
+		// TODO use thsi for testing the popup
+//		findViewById(R.id.sign_in_button).setOnClickListener(new OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				StrategoBoardActivity.displayCombatPopup(MainActivity.this);
+//			}
+//		});
 		findViewById(R.id.create_user).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {

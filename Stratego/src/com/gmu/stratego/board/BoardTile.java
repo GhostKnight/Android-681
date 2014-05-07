@@ -81,7 +81,9 @@ public class BoardTile extends View {
 				// 0 team color
 				// 1 unit power
 				// 2 sourceID
-				Item item = new Item(Integer.toString(teamColor) + ":" + Integer.toString(unitPower) + ":" + getId());
+				// 3 sourceX
+				// 4 sourceY
+				Item item = new Item(Integer.toString(teamColor) + ":" + Integer.toString(unitPower) + ":" + getId() + ":" + x + ":" + y);
 				String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_HTML};
 				ClipData dragData = new ClipData((CharSequence) v.getTag(), mimeTypes, item);
 				View.DragShadowBuilder myShadow = new DragShadowBuilder(v);
@@ -110,20 +112,33 @@ public class BoardTile extends View {
 			final int temp = Integer.parseInt(builder.toString().split(":")[0]);
 			final int unitPower = Integer.parseInt(builder.toString().split(":")[1]);
 			final int sourceID = Integer.parseInt(builder.toString().split(":")[2]);
+			final int sourceX = Integer.parseInt(builder.toString().split(":")[3]);
+			final int sourceY = Integer.parseInt(builder.toString().split(":")[4]);
 			final String unitType = (temp == Color.RED) ? StrategoAction.RED_PIECE : StrategoAction.BLUE_PIECE;
+			// don't want to handle an event to ourselves...
+			if (!deploymentSquares.contains(sourceID) && StrategoConstants.boardIDs[sourceY][sourceX] == getId()) {
+				Log.d("", "fml");
+				return true;
+			}
 			final StrategoHttpTask task = new StrategoHttpTask() {
 				@Override
 				public String performTask(String... urls) {
 					try {
 						StrategoAction json = new StrategoAction(client.getUser(), 0);
+						json.setPieceValue(unitPower);
+						json.setPieceType(unitType);
 						if (deploymentSquares.contains(sourceID)) {
+							Log.d("","HELLO!");
 							json.setActionType(StrategoAction.PLACE_PIECE);
 							json.setX(x);
 							json.setY(y);
-							json.setPieceValue(unitPower);
-							json.setPieceType(unitType);
-						} else {
-							
+						} else if (currentUnit == null) {
+							Log.d("", "HELLO2");
+							json.setActionType(StrategoAction.MOVE_ACTION);
+							json.setX(sourceX);
+							json.setY(sourceY);
+							json.setNewX(x);
+							json.setNewY(y);
 						}
 						return client.POST(url, json);
 					} catch (Exception e) {
@@ -180,8 +195,10 @@ public class BoardTile extends View {
 	}
 	
 	public void changeYellow() {
-		paint.setColor(Color.YELLOW);
-		invalidate();
+		if (currentUnit == null) {
+			paint.setColor(Color.YELLOW);
+			invalidate();
+		}
 	}
 	
 	public boolean isYellow() {

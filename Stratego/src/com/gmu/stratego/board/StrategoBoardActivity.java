@@ -22,10 +22,16 @@ import com.gmu.stratego.util.StrategoConstants;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
+import android.sax.StartElementListener;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.TableLayout;
 import android.widget.Toast;
 
@@ -107,6 +113,7 @@ public class StrategoBoardActivity extends Activity {
 	 */
 	public synchronized void getGameState() {
 		final String url = URLS.GET_GAME_STATE.replace(":id", gameID);
+		Log.d("URL for get game state", url);
 		StrategoHttpTask task = new StrategoHttpTask() {
 			@Override
 			public String performTask(String... urls) {
@@ -133,7 +140,7 @@ public class StrategoBoardActivity extends Activity {
 			gamePhase = gameState.getString("phase");
 			
 			// Process what player we are
-			if (gameState.has("bluePlayer") && gameState.getJSONObject("bluePlayer").getString("_id").equals(client.getUser().getString("_id"))) {
+			if (gameState.has("bluePlayer") && gameState.getJSONObject("bluePlayer").getString("username").equals(client.getUser().getString("username"))) {
 				playerColor = Color.BLUE;
 			} else {
 				playerColor = Color.RED;
@@ -242,6 +249,7 @@ public class StrategoBoardActivity extends Activity {
 	
 	private void getNewActions() {
 		final String url = URLS.GET_GAME_ACTIONS.replace(":id", gameID) + ((latestAction > 0) ? "?lastActionId=" + latestAction : "");
+		Log.d("URL for getting newer actions: ", url);
 		StrategoHttpTask task = new StrategoHttpTask() {
 			@Override
 			public String performTask(String... urls) {
@@ -315,14 +323,35 @@ public class StrategoBoardActivity extends Activity {
 		}
 	}
 	
-	public static void displayCombatPopup() {
+	public static void displayCombatPopup(Context context) {
 		// 1. Instantiate an AlertDialog.Builder with its constructor
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
 		// 2. Chain together various setter methods to set the dialog characteristics
-		//builder.setView(new View()).setTitle("COMBAT");
+		builder.setView(new StrategoCombatView(context, R.drawable.b1, R.drawable.r10, false))
+			.setTitle("COMBAT")
+			.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					// TODO start timer
+				}
+			})
+			.setOnDismissListener(new OnDismissListener() {
+				@Override
+				public void onDismiss(DialogInterface dialog) {
+					// TODO start timer
+				}
+			});
 
 		// 3. Get the AlertDialog from create()
 		AlertDialog dialog = builder.create();
+		dialog.setCancelable(true);
+		
+		WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+	    lp.copyFrom(dialog.getWindow().getAttributes());
+	    lp.width = 380;
+	    lp.height = 250;
+	    dialog.show();
+	    dialog.getWindow().setAttributes(lp);
 	}
 }

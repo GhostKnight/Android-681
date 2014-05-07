@@ -21,24 +21,24 @@ public class StrategoCombatView extends View {
 	}
 	
 	private void init(final Canvas canvas) {
-		canvas.setBitmap(Bitmap.createBitmap(500, 300, Bitmap.Config.ARGB_8888));
+		//canvas.setBitmap(Bitmap.createBitmap(500, 300, Bitmap.Config.ARGB_8888));
 		
 		final Paint paint = new Paint();
 		paint.setColor((redWins) ? Color.RED : Color.BLUE);
 		
-		canvas.drawText((redWins) ? "Red wins!" : "Blue Wins!", 65, 5, paint);
+		canvas.drawText((redWins) ? "Red wins!" : "Blue Wins!", 135, 15, paint);
+		canvas.drawText("vs.", 145, 70, paint);
 		
-		final Rect blueRect = new Rect(10, 30, 120, 120);
+		//left //top //right //bottom
+		final Rect blueRect = new Rect(10, 20, 130, 140);
 		final Drawable blueGfx = getResources().getDrawable(blueNum);
 		blueGfx.setBounds(blueRect);
 		blueGfx.draw(canvas);
 		
-		final Rect redRect = new Rect(200, 30, 120, 120);
+		final Rect redRect = new Rect(200, 20, 320, 140);
 		final Drawable redGfx = getResources().getDrawable(redNum);
 		redGfx.setBounds(redRect);
 		redGfx.draw(canvas);
-		
-		canvas.drawPaint(paint);
 	}
 	
 	@Override

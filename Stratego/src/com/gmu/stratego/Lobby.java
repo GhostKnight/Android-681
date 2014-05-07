@@ -106,7 +106,7 @@ public class Lobby extends Activity {
 						Log.d("Create game result", result);
 						
 						if (result.contains("id: ")) {
-							Log.d("Setting selected", "selecteGameID is now: " + result.split("id: ")[1]);
+							Log.d("Setting selected", "selecteGameID is now: " + result.replace("\"", "").split("id: ")[1]);
 							selectedGameID = result.replace("\"", "").split("id: ")[1];
 							Toast.makeText(getBaseContext(), "You already have a game in progress, continuing that game", Toast.LENGTH_LONG).show();
 							joinGame(selectedGameID, Lobby.this);
