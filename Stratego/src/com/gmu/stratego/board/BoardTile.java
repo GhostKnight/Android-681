@@ -22,6 +22,7 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
@@ -38,6 +39,7 @@ public class BoardTile extends View {
 	private int unitPower = 0;
 	private StrategoClient client;
 	private Integer numberOfUnits = null;
+	private float scale;
 
 	public BoardTile(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
@@ -72,6 +74,8 @@ public class BoardTile extends View {
 		// List of all of the deployment squares
 		deploymentSquares.addAll(Arrays.asList(StrategoConstants.DEP_TABLE_IDS));
 		
+	    scale = getContext().getResources().getDisplayMetrics().density;
+		Log.d("scale", "Scale: " + scale);
 		
 		setOnLongClickListener(new OnLongClickListener() {
 			@Override
@@ -172,12 +176,12 @@ public class BoardTile extends View {
 		if (numberOfUnits != null && numberOfUnits.intValue() == 0) {
 			this.setVisibility(INVISIBLE);
 		} else if (currentUnit != null) {
-			Rect rect = new Rect(0, 0, 60, 60); // TODO: figure out how to do this rectangle bullshit
+			Rect rect = new Rect(0, 0, 60*(int)scale, 60*(int)scale); // TODO: figure out how to do this rectangle bullshit
 			currentUnit.setBounds(rect);
 			currentUnit.draw(canvas);
 			canvas.drawPaint(paint);
 		} else {
-			canvas.drawRect(0, 0, 60, 60, paint);
+			canvas.drawRect(0, 0, 60*(int)scale, 60*(int)scale, paint);
 		}
 	}
 	
@@ -269,7 +273,7 @@ public class BoardTile extends View {
 			break;
 		}
 		
-		this.teamColor = teamColor;
+		this.teamColor = (unitPower != 0) ? teamColor : Color.MAGENTA;
 		this.unitPower = unitPower;
 		currentUnit = (unitPower != 0) ? getResources().getDrawable(pieceNum) : null;
 		invalidate();

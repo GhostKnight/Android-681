@@ -29,6 +29,7 @@ import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnDismissListener;
 import android.graphics.Color;
 import android.sax.StartElementListener;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -100,51 +101,49 @@ public class StrategoBoardActivity extends Activity {
 	}
 	
 	public synchronized void setSelectedSpace(final BoardTile selectedTile) {
-//		if (this.selectedTile != null) {
-//			this.selectedTile.changeBlack();
-//		}
 		cleanupBoard();
 		this.selectedTile = selectedTile;
 		selectedTile.changeBlue();
 		final int x = selectedTile.getXLoc() - 1;
 		final int y = selectedTile.getYLoc() - 1;
+		Log.d("X&Y", "x: "+x+", y: "+y);
 		boolean xPosDone = false;
 		boolean xNegDone = false;
 		boolean yNegDone = false;
 		boolean yPosDone = false;
 		for (int i=1; i <= StrategoConstants.allowedMoves[selectedTile.getUnitPower()]; i++) {
 			// Positive X direction
-			if (x < 9 && !xPosDone) {
+			if (x < (10-i) && !xPosDone) {
 				BoardTile xPos = (BoardTile)findViewById(StrategoConstants.boardIDs[y][x + i]);
 				if (xPos.getTeamColor() != playerColor)
 					xPos.changeYellow();
-				if (xPos.getUnitPower() != 0)
+				if (xPos.getUnitPower() != 0 || xPos.getVisibility() == View.INVISIBLE)
 					xPosDone = true;
 			}
 			// Negative X direction
-			if (x > 0 && !xNegDone) {
+			if (x > (0+i) && !xNegDone) {
 				BoardTile xNeg = (BoardTile)findViewById(StrategoConstants.boardIDs[y][x - i]);
 				if (xNeg.getTeamColor() != playerColor)
 					xNeg.changeYellow();
-				if (xNeg.getUnitPower() != 0) {
+				if (xNeg.getUnitPower() != 0 || xNeg.getVisibility() == View.INVISIBLE) {
 					xNegDone = true;
 				}
 			}
 			// Positive Y direction
-			if (y < 9 && !yPosDone) {
+			if (y < (10-i) && !yPosDone) {
 				BoardTile yPos = (BoardTile) findViewById(StrategoConstants.boardIDs[y + i][x]);
 				if (yPos.getTeamColor() != playerColor)
 					yPos.changeYellow();
-				if (yPos.getUnitPower() != 0) {
+				if (yPos.getUnitPower() != 0 || yPos.getVisibility() == View.INVISIBLE) {
 					yPosDone = true;
 				}
 			}
 			// Negative Y direction
-			if (y > 0 && !yNegDone) {
+			if (y > (0+i) && !yNegDone) {
 				BoardTile yNeg = (BoardTile) findViewById(StrategoConstants.boardIDs[y - i][x]);
 				if (yNeg.getTeamColor() != playerColor)
 					yNeg.changeYellow();
-				if (yNeg.getUnitPower() != 0) {
+				if (yNeg.getUnitPower() != 0 || yNeg.getVisibility() == View.INVISIBLE) {
 					yNegDone = true;
 				}
 			}
@@ -413,9 +412,11 @@ public class StrategoBoardActivity extends Activity {
 		dialog.setCancelable(true);
 		
 		WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+		DisplayMetrics metrics = new DisplayMetrics();
+		((WindowManager) StrategoBoardActivity.this.getSystemService(WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);//getResources().getDisplayMetrics().density;
 	    lp.copyFrom(dialog.getWindow().getAttributes());
-	    lp.width = 380;
-	    lp.height = 250;
+	    lp.width = 380 * (int)metrics.scaledDensity;
+	    lp.height = 250 * (int)metrics.scaledDensity;
 	    dialog.show();
 	    dialog.getWindow().setAttributes(lp);
 	}
