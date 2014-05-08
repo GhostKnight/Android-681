@@ -253,7 +253,7 @@ public class StrategoBoardActivity extends Activity {
 			return; // Handled MOVE_ACTION
 		} else if (action.getActionType().equals(StrategoAction.ATTACK_ACTION)) {
 			// Handle an attack message
-			final int attackerStr = action.getJSONObject("attacker").getInt("value");
+			int attackerStr = action.getJSONObject("attacker").getInt("value");
 			final int defenderStr = action.getJSONObject("defender").getInt("value");
 			final int attackerColor = (action.getJSONObject("attacker").getString("type").equals("RedPiece")) ? Color.RED : Color.BLUE;
 			final int bluePiece = (attackerColor != Color.RED) ? StrategoConstants.BLUE_PIECES[attackerStr] : StrategoConstants.BLUE_PIECES[defenderStr];
@@ -270,6 +270,8 @@ public class StrategoBoardActivity extends Activity {
 			if (!attackResult.equals("ATTACKER_DIES")) {
 				final int newX = action.getInt("newX") - 1;
 				final int newY = action.getInt("newY") - 1;
+				if (attackerColor != playerColor)
+					attackerStr = 13;
 				((BoardTile)findViewById(StrategoConstants.boardIDs[oldY][oldX])).setImage(attackerColor, 0); // clear off old tile
 				((BoardTile)findViewById(StrategoConstants.boardIDs[newY][newX])).setImage(attackerColor, attackerStr);
 			} else {
