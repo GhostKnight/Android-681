@@ -104,8 +104,13 @@ public class StrategoBoardActivity extends Activity {
 		cleanupBoard();
 		this.selectedTile = selectedTile;
 		selectedTile.changeBlue();
-		final int x = selectedTile.getXLoc() - 1;
-		final int y = selectedTile.getYLoc() - 1;
+		
+		// Dont do the rest if we are placing pieces.
+		if (gamePhase.equals("PLACE_PIECES"))
+			return;
+		
+		final int x = selectedTile.getXLoc();
+		final int y = selectedTile.getYLoc();
 		Log.d("X&Y", "x: "+x+", y: "+y);
 		boolean xPosDone = false;
 		boolean xNegDone = false;
@@ -422,6 +427,9 @@ public class StrategoBoardActivity extends Activity {
 	}
 	
 	private void cleanupBoard() {
+		if (gamePhase.equals("PLACE_PIECES"))
+			return;
+		
 		for (int x=0; x < 10; x++) {
 			for (int y=0; y < 10; y++) {
 				((BoardTile) findViewById(StrategoConstants.boardIDs[y][x])).changeBlack();
